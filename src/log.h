@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file   debug.h
+/// @file   log.h
 /// @brief  Provides an API for logging and halting execution if necessary
 /// @author Jacob Adkins (jpadkins)
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEBUG_LOG_H
-#define DEBUG_LOG_H
+#ifndef LOG_H
+#define LOG_H
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Headers
@@ -13,38 +13,38 @@
 #include <stdarg.h>
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief DebugLevel is the severity of the logged message
+/// @brief LogLevel is the severity of the logged message
 ///
-/// DEBUG_INFO: Logs the message with the [INFO] tag
-/// DEBUG_WARN: Logs the message with the [WARN] tag - more severe
-/// DEBUG_EXIT: Logs the message with the [EXIT] tag and halts execution
+/// LOG_INFO: Logs the message with the [INFO] tag
+/// LOG_WARN: Logs the message with the [WARN] tag - more severe
+/// LOG_EXIT: Logs the message with the [EXIT] tag and halts execution
 ///////////////////////////////////////////////////////////////////////////////
-typedef enum {DEBUG_INFO, DEBUG_WARN, DEBUG_EXIT} DebugLevel;
+typedef enum {LOG_INFO, LOG_WARN, LOG_EXIT} LogLevel;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Used internally by the macros - do not call
 ///////////////////////////////////////////////////////////////////////////////
-void debug_log(DebugLevel level, const char *file, const char *func, int line,
+void debug_log(LogLevel level, const char *file, const char *func, int line,
     const char *msg, ...);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Logs a message with a severity level
 ///
-/// @param level    DebugLevel corresponding with the severity of the message
+/// @param level    LogLevel corresponding with the severity of the message
 /// @param msg      const char * containing the message to log
 ///////////////////////////////////////////////////////////////////////////////
-#define DEBUG(level,msg) debug_log(level,__FILE__,__func__,__LINE__,msg)
+#define LOG(level,msg) debug_log(level,__FILE__,__func__,__LINE__,msg)
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Logs a formatted message with a severity level
 ///
 /// The formatted string can be at most 1024 chars.
 ///
-/// @param level    DebugLevel corresponding with the severity of the message
+/// @param level    LogLevel corresponding with the severity of the message
 /// @param msg      const char * containing the format string
 /// @param ...      arguments to be formatted into msg
 ///////////////////////////////////////////////////////////////////////////////
-#define DEBUGFMT(level,msg,...) debug_log(level,__FILE__,__func__,__LINE__,\
+#define LOGFMT(level,msg,...) debug_log(level,__FILE__,__func__,__LINE__,\
     msg,__VA_ARGS__);
 
 #endif
