@@ -17,6 +17,7 @@
 
 #include "glad.h"
 #include "log.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 /// Macros
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,18 +37,13 @@ typedef struct { int x, y, w, h; } rect;
 ///////////////////////////////////////////////////////////////////////////////
 
 static FT_Face face;
+static float delta = 0.0f;
 static FT_Library freetype;
 static bool running = true;
 static SDL_GLContext context;
 static SDL_Window *window = NULL;
-//static SDL_Renderer *renderer = NULL;
 static const vec2 window_size = {800, 600};
 static const char *font_path = "res/unifont.ttf";
-static const GLfloat vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
-};
 
 static const struct {
     struct {
@@ -56,7 +52,7 @@ static const struct {
     struct {
         const GLchar *basic;
     } fragment;
-} shaders_src = {
+} shaders = {
     {
         "                                               \n\
         #version 330 core                               \n\
@@ -91,7 +87,7 @@ static const struct {
 ///
 /// @return Identifier of the newly created and compiled shader
 ///////////////////////////////////////////////////////////////////////////////
-GLuint gl_shader_new(GLenum type, const char *src)
+GLuint GL_ShaderNew(GLenum type, const char *src)
 {
     GLint status;
     GLuint shader;
@@ -113,9 +109,9 @@ GLuint gl_shader_new(GLenum type, const char *src)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Used internally by gl_program_new
+/// @brief Used internally by GL_ProgramNew
 ///////////////////////////////////////////////////////////////////////////////
-GLuint gl_program_new_varg(int num, ...)
+GLuint GL_ProgramNewVarg(int num, ...)
 {
     va_list ap;
     GLint status;
@@ -136,7 +132,7 @@ GLuint gl_program_new_varg(int num, ...)
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (!status) {
         glGetProgramInfoLog(program, 512, NULL, errmsg);
-        LOGFMT(LOG_EXIT, "Shader program link failed: %s", errmsg);
+        LOGFMT(LOG_EXIT, "Shader program linking failed: %s", errmsg);
     }
 
     return program;
@@ -149,13 +145,12 @@ GLuint gl_program_new_varg(int num, ...)
 ///
 /// @return Identifier of the newly created and linked shader program
 ///////////////////////////////////////////////////////////////////////////////
-#define gl_program_new(...) gl_program_new_varg(NUMARGS(__VA_ARGS__), \
-    __VA_ARGS__)
+#define GL_ProgramNew(...) GL_ProgramNewVarg(NUMARGS(__VA_ARGS__),__VA_ARGS__)
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Initialze SDL2, the window, OpenGL, and FreeType
 ///////////////////////////////////////////////////////////////////////////////
-void app_init(void)
+void App_Init(void)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING)) {
         LOG(LOG_EXIT, "SDL2 Initialization failed");
@@ -168,7 +163,6 @@ void app_init(void)
         SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetSwapInterval(1);
 
     if (!(window = SDL_CreateWindow(
         "SDL2 Application",
@@ -185,11 +179,12 @@ void app_init(void)
 
     gladLoadGLLoader(SDL_GL_GetProcAddress);
     if (!GL_VERSION_3_3) {
-        LOG(LOG_EXIT, "Failed to load OpenGL > 3.3");
+        LOG(LOG_EXIT, "Failed to load OpenGL >= 3.3");
     }
 
     glViewport(0, 0, window_size.x, window_size.y);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    SDL_GL_SetSwapInterval(1);
 
     if (FT_Init_FreeType(&freetype)) {
         LOG(LOG_EXIT, "FreeType initialization failed");
@@ -197,13 +192,12 @@ void app_init(void)
     else if (FT_New_Face(freetype, font_path, 0, &face)) {
         LOG(LOG_EXIT, "Font face loading failed");
     }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Cleanup SDL2, the window, and FreeType
 ///////////////////////////////////////////////////////////////////////////////
-void app_quit(void)
+void App_Quit(void)
 {
     FT_Done_FreeType(freetype);
     SDL_GL_DeleteContext(context);
@@ -214,9 +208,14 @@ void app_quit(void)
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Update the application state
 ///////////////////////////////////////////////////////////////////////////////
-void app_update(void)
+void App_Update(void)
 {
     SDL_Event event;
+    static float tcurr = 0.0f, tprev = 0.0f;
+
+    tcurr = SDL_GetPerformanceCounter();
+    delta = ((tcurr - tprev) / SDL_GetPerformanceFrequency()) * 1000.0f;
+    tprev = tcurr;
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
@@ -247,11 +246,6 @@ void app_update(void)
     }
 }
 
-void app_render(void)
-{
-
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 /// Main
 ///////////////////////////////////////////////////////////////////////////////
@@ -259,12 +253,17 @@ void app_render(void)
 int main(void)
 {
     GLuint VBO, VAO, vert, frag, prog;
+    const GLfloat vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f
+    };
 
-    app_init();
+    App_Init();
 
-    vert = gl_shader_new(GL_VERTEX_SHADER, shaders_src.vertex.basic);
-    frag = gl_shader_new(GL_FRAGMENT_SHADER, shaders_src.fragment.basic);
-    prog = gl_program_new(vert, frag);
+    vert = GL_ShaderNew(GL_VERTEX_SHADER, shaders.vertex.basic);
+    frag = GL_ShaderNew(GL_FRAGMENT_SHADER, shaders.fragment.basic);
+    prog = GL_ProgramNew(vert, frag);
     glDeleteShader(vert);
     glDeleteShader(frag);
 
@@ -281,7 +280,7 @@ int main(void)
     glBindVertexArray(0);
 
     while (running) {
-        app_update();
+        App_Update();
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(prog);
         glBindVertexArray(VAO);
@@ -293,7 +292,6 @@ int main(void)
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
 
-    app_quit();
-
+    App_Quit();
     return 0;
 }

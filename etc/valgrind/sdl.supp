@@ -192,6 +192,165 @@
 }
 {
    <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:memmove
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:GL_ProgramNewVarg
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:memmove
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr2
+   fun:memmove
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/xorg/modules/dri/i965_dri.so
+   obj:/usr/lib/libGLX_mesa.so.0.0.0
+   obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: definite
    fun:malloc
@@ -201,6 +360,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -218,7 +378,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -278,6 +438,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -379,6 +540,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -464,7 +626,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -478,6 +640,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -648,7 +811,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -673,6 +836,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -803,6 +967,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -837,7 +1002,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1075,7 +1240,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1210,6 +1375,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -1227,7 +1393,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1244,7 +1410,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1260,6 +1426,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -1277,7 +1444,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1328,7 +1495,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1360,6 +1527,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -1420,6 +1588,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -1433,6 +1602,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -1654,7 +1824,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
-   fun:main
+   fun:App_Init
 }
 {
    <insert_a_suppression_name_here>
@@ -1805,6 +1975,8 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Quit
    fun:main
 }
 {
@@ -1833,6 +2005,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -2149,6 +2322,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {
@@ -2318,6 +2492,7 @@
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
    obj:/usr/lib/libSDL2-2.0.so.0.7.0
+   fun:App_Init
    fun:main
 }
 {

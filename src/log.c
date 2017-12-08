@@ -32,13 +32,13 @@ void debug_log(LogLevel level, const char *file, const char *func, int line,
 
     switch (level) {
     case LOG_INFO:
-        fprintf(stdout, "[INFO][%s][%s][%x]: %s\n", file, func, line, msgbuff);
+        fprintf(stdout, "[INFO][%s][%s][%d]: %s\n", file, func, line, msgbuff);
         break;
     case LOG_WARN:
-        fprintf(stderr, "[WARN][%s][%s][%x]: %s\n", file, func, line, msgbuff);
+        fprintf(stderr, "[WARN][%s][%s][%d]: %s\n", file, func, line, msgbuff);
         break;
     case LOG_EXIT:
-        fprintf(stderr, "[EXIT][%s][%s][%x]: %s\n", file, func, line, msgbuff);
+        fprintf(stderr, "[EXIT][%s][%s][%d]: %s\n", file, func, line, msgbuff);
         exit(EXIT_FAILURE);
         break;
     }
