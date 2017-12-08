@@ -17,6 +17,12 @@
 
 #include "glad.h"
 #include "log.h"
+///////////////////////////////////////////////////////////////////////////////
+/// Macros
+///////////////////////////////////////////////////////////////////////////////
+
+#define NUMARGS(...) (sizeof((int[]){__VA_ARGS__})/sizeof(int))
+#define UNUSED(x) (void)x
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Structs
@@ -74,16 +80,83 @@ static const struct {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Main
+/// Helper functions
 ///////////////////////////////////////////////////////////////////////////////
 
-int main(void)
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates and compiles a new OpenGL shader
+///
+/// @param type Type of the shader
+/// @param src  Pointer to the shader's source
+///
+/// @return Identifier of the newly created and compiled shader
+///////////////////////////////////////////////////////////////////////////////
+GLuint gl_shader_new(GLenum type, const char *src)
 {
     GLint status;
-    SDL_Event event;
+    GLuint shader;
     GLchar errmsg[512];
-    GLuint VBO, VAO, vert, frag, program;
 
+    if (!(shader = glCreateShader(type))) {
+        LOG(LOG_EXIT, "Shader creation failed");
+    }
+
+    glShaderSource(shader, 1, &src, NULL);
+    glCompileShader(shader);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    if (!status) {
+        glGetShaderInfoLog(shader, 512, NULL, errmsg);
+        LOGFMT(LOG_EXIT, "Shader compilation failed: %s", errmsg);
+    }
+
+    return shader;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Used internally by gl_program_new
+///////////////////////////////////////////////////////////////////////////////
+GLuint gl_program_new_varg(int num, ...)
+{
+    va_list ap;
+    GLint status;
+    GLuint program;
+    GLchar errmsg[512];
+
+    if (!(program = glCreateProgram())) {
+        LOG(LOG_EXIT, "Shader program creation failed");
+    }
+
+    va_start(ap, num);
+    for (int i = 0; i < num; ++i) {
+        glAttachShader(program, va_arg(ap, GLuint));
+    }
+    va_end(ap);
+
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (!status) {
+        glGetProgramInfoLog(program, 512, NULL, errmsg);
+        LOGFMT(LOG_EXIT, "Shader program link failed: %s", errmsg);
+    }
+
+    return program;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates and links a new OpenGL shader program
+///
+/// @param ...      Variable number of shaders to link (GLuint)
+///
+/// @return Identifier of the newly created and linked shader program
+///////////////////////////////////////////////////////////////////////////////
+#define gl_program_new(...) gl_program_new_varg(NUMARGS(__VA_ARGS__), \
+    __VA_ARGS__)
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Initialze SDL2, the window, OpenGL, and FreeType
+///////////////////////////////////////////////////////////////////////////////
+void app_init(void)
+{
     if (SDL_Init(SDL_INIT_EVERYTHING)) {
         LOG(LOG_EXIT, "SDL2 Initialization failed");
     }
@@ -106,16 +179,7 @@ int main(void)
         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN))) {
         LOG(LOG_EXIT, "Window creation failed");
     }
-
-    if (FT_Init_FreeType(&freetype)) {
-        LOG(LOG_EXIT, "FreeType initialization failed");
-    }
-
-    if (FT_New_Face(freetype, font_path, 0, &face)) {
-        LOG(LOG_EXIT, "Font face loading failed");
-    }
-
-    if (!(context = SDL_GL_CreateContext(window))) {
+    else if (!(context = SDL_GL_CreateContext(window))) {
         LOG(LOG_EXIT, "OpenGL context creation failed");
     }
 
@@ -127,40 +191,80 @@ int main(void)
     glViewport(0, 0, window_size.x, window_size.y);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-    if (!(vert = glCreateShader(GL_VERTEX_SHADER))) {
-        LOG(LOG_EXIT, "Vertex shader creation failed");
+    if (FT_Init_FreeType(&freetype)) {
+        LOG(LOG_EXIT, "FreeType initialization failed");
     }
-    glShaderSource(vert, 1, &shaders_src.vertex.basic, NULL);
-    glCompileShader(vert);
-    glGetShaderiv(vert, GL_COMPILE_STATUS, &status);
-    if (!status) {
-        glGetShaderInfoLog(vert, 512, NULL, errmsg);
-        LOGFMT(LOG_EXIT, "Vertex shader compilation failed: %s", errmsg);
+    else if (FT_New_Face(freetype, font_path, 0, &face)) {
+        LOG(LOG_EXIT, "Font face loading failed");
     }
 
-    if (!(frag = glCreateShader(GL_FRAGMENT_SHADER))) {
-        LOG(LOG_EXIT, "Fragment shader creation failed");
-    }
-    glShaderSource(frag, 1, &shaders_src.fragment.basic, NULL);
-    glCompileShader(frag);
-    glGetShaderiv(frag, GL_COMPILE_STATUS, &status);
-    if (!status) {
-        glGetShaderInfoLog(frag, 512, NULL, errmsg);
-        LOGFMT(LOG_EXIT, "Fragment shader compilation failed: %s", errmsg);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Cleanup SDL2, the window, and FreeType
+///////////////////////////////////////////////////////////////////////////////
+void app_quit(void)
+{
+    FT_Done_FreeType(freetype);
+    SDL_GL_DeleteContext(context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Update the application state
+///////////////////////////////////////////////////////////////////////////////
+void app_update(void)
+{
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_QUIT:
+            running = false;
+            break;
+        case SDL_WINDOWEVENT:
+            switch (event.window.event) {
+            case SDL_WINDOWEVENT_RESIZED:
+                glViewport(
+                    0,
+                    0,
+                    event.window.data1,
+                    event.window.data2
+                    );
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            break;
+        }
     }
 
-    if (!(program = glCreateProgram())) {
-        LOG(LOG_EXIT, "Shader program creation failed");
+    if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE]) {
+        running = false;
     }
-    glAttachShader(program, vert);
-    glAttachShader(program, frag);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (!status) {
-        glGetProgramInfoLog(program, 512, NULL, errmsg);
-        LOGFMT(LOG_EXIT, "Shader program link failed: %s", errmsg);
-    }
-    
+}
+
+void app_render(void)
+{
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// Main
+///////////////////////////////////////////////////////////////////////////////
+
+int main(void)
+{
+    GLuint VBO, VAO, vert, frag, prog;
+
+    app_init();
+
+    vert = gl_shader_new(GL_VERTEX_SHADER, shaders_src.vertex.basic);
+    frag = gl_shader_new(GL_FRAGMENT_SHADER, shaders_src.fragment.basic);
+    prog = gl_program_new(vert, frag);
     glDeleteShader(vert);
     glDeleteShader(frag);
 
@@ -177,32 +281,9 @@ int main(void)
     glBindVertexArray(0);
 
     while (running) {
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_QUIT:
-                    running = false;
-                    break;
-                case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        glViewport(
-                            0,
-                            0,
-                            event.window.data1,
-                            event.window.data2
-                            );
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE]) {
-            running = false;
-        }
-
+        app_update();
         glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(program);
+        glUseProgram(prog);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
@@ -210,10 +291,9 @@ int main(void)
     }
 
     glDeleteBuffers(1, &VBO);
-    FT_Done_FreeType(freetype);
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    glDeleteVertexArrays(1, &VAO);
+
+    app_quit();
 
     return 0;
 }
