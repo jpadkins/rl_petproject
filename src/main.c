@@ -8,20 +8,17 @@
 /// Headers
 ///////////////////////////////////////////////////////////////////////////////
 
-// For strtok_r
-#define _POSIX_C_SOURCE 1
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include "glad.h"
 
 #include "log.h"
-#include "glad.h"
-#include "uthash.h"
+#include "glyph_info.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Macros
@@ -36,40 +33,15 @@
 
 typedef struct { int x, y; } ivec2;
 
-typedef struct {
-    struct {
-        int x;
-        int y;
-    } position;
-    struct {
-        int width;
-        int height;
-    } size;
-    struct {
-        int x;
-        int y;
-    } offset;
-} glyph_info;
-
-typedef struct {
-    int glyph_id;
-    glyph_info *info;
-    UT_hash_handle hh;
-} glyph_info_hash;
-
 ///////////////////////////////////////////////////////////////////////////////
 /// Static variables
 ///////////////////////////////////////////////////////////////////////////////
 
-static FT_Face face;
 static float delta = 0.0f;
-static FT_Library freetype;
 static bool running = true;
 static SDL_GLContext context;
 static SDL_Window *window = NULL;
-static glyph_info_hash *glyph_hash = NULL;
 static const ivec2 window_size = {800, 600};
-static const char *font_path = "res/unifont.ttf";
 
 static const struct {
     struct {
@@ -84,19 +56,25 @@ static const struct {
         #version 330 core                               \n\
                                                         \n\
         layout (location = 0) in vec3 position;         \n\
+        layout (location = 1) in vec2 texcoord;         \n\
+                                                        \n\
+        out vec2 vtexcoord;                             \n\
                                                         \n\
         void main(void) {                               \n\
-            gl_Position = vec4(position.xyz, 1.0f);     \n\
+            gl_Position = vec4(position, 1.0f);         \n\
+            vtexcoord = texcoord;                       \n\
         }"
     },
     {
         "                                               \n\
         #version 330 core                               \n\
                                                         \n\
-        out vec4 fragColor;                             \n\
+        in vec2 vtexcoord;                              \n\
+                                                        \n\
+        uniform sampler2D tex;                          \n\
                                                         \n\
         void main(void) {                               \n\
-            fragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);   \n\
+            gl_FragColor = texture(tex, vtexcoord);     \n\
         }"
     }
 };
@@ -104,136 +82,6 @@ static const struct {
 ///////////////////////////////////////////////////////////////////////////////
 /// Helper functions
 ///////////////////////////////////////////////////////////////////////////////
-
-void Glyph_CleanupHash(void)
-{
-    glyph_info_hash *entry = NULL, *tmp = NULL;
-    HASH_ITER(hh, glyph_hash, entry, tmp) {
-        HASH_DEL(glyph_hash, entry);
-        free(entry->info);
-        free(entry);
-    }
-}
-
-void Glyph_AddInfo(int glyph, glyph_info *info)
-{
-    glyph_info_hash *entry = NULL;
-
-    if (!info) {
-        LOGFMT(LOG_EXIT, "Null passed in as *info with glyph #%d", glyph);
-    }
-
-    HASH_FIND_INT(glyph_hash, &glyph, entry);
-    if (entry) {
-        LOGFMT(LOG_EXIT, "Glyph #%d info has already been added", glyph);
-    }
-
-    if (!(entry = malloc(sizeof(glyph_info_hash)))) {
-        LOG(LOG_EXIT, "Failed to alloc memory for hash entry");
-    }
-
-    entry->info = info;
-    entry->glyph_id = glyph;
-    
-    HASH_ADD_INT(glyph_hash, glyph_id, entry);
-}
-
-void Glyph_PopulateHash(const char *file_path)
-{
-    int glyph_id = 0;
-    FILE *file = NULL;
-    glyph_info *info = NULL;
-    unsigned long fsize = 0;
-    int linenum = 1, ival = 0;
-    char *buff = NULL, *line = NULL, *lineptr = NULL, linebuff[1024],
-        *tok = NULL, *tokptr = NULL, tokbuff[512], *val = NULL, *valptr = NULL,
-        valbuff[512];
-
-    // Load the BMFont file into buff
-    if (!(file = fopen(file_path, "r"))) {
-        LOGFMT(LOG_EXIT, "Could not open font info file: %s", file_path);
-    }
-
-    fseek(file, 0, SEEK_END);
-    fsize = (unsigned long)ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    if (!(buff = malloc(fsize + 1))) {
-        LOG(LOG_EXIT, "Failed to alloc memory for file buffer");
-    }
-
-    fread(buff, fsize, 1, file);
-    fclose(file);
-
-    // Move to first line that begins with "char"
-    line = strtok_r(buff, "\n", &lineptr);
-    while (strncmp(line, "char", 4)) {
-        ++linenum;
-        line = strtok_r(NULL, "\n", &lineptr);
-        if (!line) {
-            LOG(LOG_EXIT, "BMFont file malformed");
-        }
-    }
-
-#define NEXT_VAL(token) \
-    if (!(tok = strtok_r(NULL, " ", &tokptr))) {\
-        LOGFMT(LOG_EXIT, "BMFont malformed: line %d, tok %s", linenum, token);\
-    }\
-    strcpy(tokbuff, tok);\
-    val = strtok_r(tokbuff, "=", &valptr);\
-    val = strtok_r(NULL, "=", &valptr);\
-    strcpy(valbuff, val);\
-    ival = (int)strtol(valbuff, NULL, 10);
-
-    while ((line = strtok_r(NULL, "\n", &lineptr))) {
-        if (!(info = malloc(sizeof(glyph_info)))) {
-            LOG(LOG_EXIT, "Failed to alloc memory for glyph info");
-        }
-        strcpy(linebuff, line);
-        tok = strtok_r(linebuff, " ", &tokptr);
-        // Token #1 is id=<glyph>
-        NEXT_VAL("id");
-        glyph_id = ival;
-        // Token #2 is x=<x coord>
-        NEXT_VAL("x");
-        info->position.x = ival;
-        // Token #3 is y=<y coord>
-        NEXT_VAL("y");
-        info->position.y = ival;
-        // Token #4 is width=<glyph width>
-        NEXT_VAL("width");
-        info->size.width = ival;
-        // Token #5 is height=<glyph height>
-        NEXT_VAL("height");
-        info->size.height = ival;
-        // Token #6 is xoffset=<x offset>
-        NEXT_VAL("xoffset");
-        info->offset.x = ival;
-        // Token #7 is yoffset=<y offset>
-        NEXT_VAL("yoffset");
-        info->offset.y = ival;
-        // We don't care about the other tokens
-        Glyph_AddInfo(glyph_id, info);
-        info = NULL;
-    }
-
-#undef NEXT_VAL
-
-    free(buff);
-}
-
-const glyph_info * Glyph_GetInfo(int glyph)
-{
-    glyph_info_hash *entry = NULL;
-
-    HASH_FIND_INT(glyph_hash, &glyph, entry);
-    if (!entry) {
-        LOGFMT(LOG_INFO, "Glyph not in hash: %d", glyph);
-        return NULL;
-    }
-
-    return entry->info;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Creates and compiles a new OpenGL shader
@@ -338,16 +186,11 @@ void App_Init(void)
         LOG(LOG_EXIT, "Failed to load OpenGL >= 3.3");
     }
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glViewport(0, 0, window_size.x, window_size.y);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     SDL_GL_SetSwapInterval(1);
-
-    if (FT_Init_FreeType(&freetype)) {
-        LOG(LOG_EXIT, "FreeType initialization failed");
-    }
-    else if (FT_New_Face(freetype, font_path, 0, &face)) {
-        LOG(LOG_EXIT, "Font face loading failed");
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -355,7 +198,6 @@ void App_Init(void)
 ///////////////////////////////////////////////////////////////////////////////
 void App_Quit(void)
 {
-    FT_Done_FreeType(freetype);
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -408,19 +250,22 @@ void App_Update(void)
 
 int main(void)
 {
-    GLuint VBO, VAO, vert, frag, prog;
+    ivec2 tex_size = {0, 0};
+    unsigned char *tex_data = NULL;
+    GLuint VBO, EBO, VAO, vert, frag, prog, tex;
     const GLfloat vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+        // Vertex coords        // Texture coords
+         0.9f,   0.9f,  0.0f,   1.0f,   1.0f,
+         0.9f,  -0.9f,  0.0f,   1.0f,   0.0f,
+        -0.9f,  -0.9f,  0.0f,   0.0f,   0.0f,
+        -0.9f,   0.9f,  0.0f,   0.0f,   1.0f
+    };
+    const GLuint indices[] = {
+        0, 1, 3,
+        1, 2, 3,
     };
 
     App_Init();
-
-    FT_Set_Pixel_Sizes(face, 0, 16);
-    if (FT_Load_Char(face, L'x', FT_LOAD_RENDER)) {
-        LOG(LOG_EXIT, "Glyph loading failed");
-    }
 
     vert = GL_ShaderNew(GL_VERTEX_SHADER, shaders.vertex.basic);
     frag = GL_ShaderNew(GL_FRAGMENT_SHADER, shaders.fragment.basic);
@@ -429,34 +274,57 @@ int main(void)
     glDeleteShader(frag);
 
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
     glGenVertexArrays(1, &VAO);
 
+    // Define simple VAO
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat),
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+        GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
         (void *)0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+        (void *)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
-    {
-    Glyph_PopulateHash("res/unifont.fnt");
-    const glyph_info *info = Glyph_GetInfo(L'▂');
-    printf("Glyph info: pos %dx%d\n", info->position.x, info->position.y);
-    Glyph_CleanupHash();
+    // Load texture
+    if (!(tex_data = stbi_load("res/unifont.png", &tex_size.x, &tex_size.y,
+        NULL, 0))) {
+        LOG(LOG_EXIT, "Font atlas loading failed");
     }
+
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size.x, tex_size.y, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, tex_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(tex_data);
+
+    GlyphInfo_Populate("res/unifont.fnt");
+    const glyph_info *info = GlyphInfo_Get(L'▂');
+    printf("Glyph info: pos %dx%d\n", info->position.x, info->position.y);
+    GlyphInfo_Cleanup();
 
     while (running) {
         App_Update();
         glClear(GL_COLOR_BUFFER_BIT);
+        glBindTexture(GL_TEXTURE_2D, tex);
         glUseProgram(prog);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
         SDL_GL_SwapWindow(window);
     }
 
+    glDeleteBuffers(1, &EBO);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
 
