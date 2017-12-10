@@ -14,7 +14,7 @@
 ###############################################################################
 
 COMP := clang
-CFLAGS := -std=c99 -Wall -Wextra -Werror -Wconversion -pedantic
+CFLAGS := -g -std=c11 -Wall -Wextra -Werror -Wconversion -pedantic
 
 ###############################################################################
 ### Linker flags

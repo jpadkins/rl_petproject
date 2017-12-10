@@ -15,6 +15,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "linmath.h"
 #include "glad.h"
 
 #include "log.h"
@@ -52,29 +53,31 @@ static const struct {
     } fragment;
 } shaders = {
     {
-        "                                               \n\
-        #version 330 core                               \n\
-                                                        \n\
-        layout (location = 0) in vec3 position;         \n\
-        layout (location = 1) in vec2 texcoord;         \n\
-                                                        \n\
-        out vec2 vtexcoord;                             \n\
-                                                        \n\
-        void main(void) {                               \n\
-            gl_Position = vec4(position, 1.0f);         \n\
-            vtexcoord = texcoord;                       \n\
+        "                                                   \n\
+        #version 330 core                                   \n\
+                                                            \n\
+        layout (location = 0) in vec3 position;             \n\
+        layout (location = 1) in vec2 texcoord;             \n\
+                                                            \n\
+        out vec2 vtexcoord;                                 \n\
+                                                            \n\
+        uniform mat4 transform;                             \n\
+                                                            \n\
+        void main(void) {                                   \n\
+            gl_Position = transform * vec4(position, 1.0f); \n\
+            vtexcoord = texcoord;                           \n\
         }"
     },
     {
-        "                                               \n\
-        #version 330 core                               \n\
-                                                        \n\
-        in vec2 vtexcoord;                              \n\
-                                                        \n\
-        uniform sampler2D tex;                          \n\
-                                                        \n\
-        void main(void) {                               \n\
-            gl_FragColor = texture(tex, vtexcoord);     \n\
+        "                                                   \n\
+        #version 330 core                                   \n\
+                                                            \n\
+        in vec2 vtexcoord;                                  \n\
+                                                            \n\
+        uniform sampler2D tex;                              \n\
+                                                            \n\
+        void main(void) {                                   \n\
+            gl_FragColor = texture(tex, vtexcoord);         \n\
         }"
     }
 };
@@ -250,6 +253,8 @@ void App_Update(void)
 
 int main(void)
 {
+    GLint utransform;
+    mat4x4 mtransform;
     ivec2 tex_size = {0, 0};
     unsigned char *tex_data = NULL;
     GLuint VBO, EBO, VAO, vert, frag, prog, tex;
@@ -292,8 +297,9 @@ int main(void)
     glEnableVertexAttribArray(1);
 
     // Load texture
+    stbi_set_flip_vertically_on_load(true);
     if (!(tex_data = stbi_load("res/unifont.png", &tex_size.x, &tex_size.y,
-        NULL, 0))) {
+        NULL, STBI_rgb_alpha))) {
         LOG(LOG_EXIT, "Font atlas loading failed");
     }
 
@@ -308,16 +314,14 @@ int main(void)
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(tex_data);
 
-    GlyphInfo_Populate("res/unifont.fnt");
-    const glyph_info *info = GlyphInfo_Get(L'▂');
-    printf("Glyph info: pos %dx%d\n", info->position.x, info->position.y);
-    GlyphInfo_Cleanup();
-
+    mat4x4_identity(mtransform);
+    utransform = glGetUniformLocation(prog, "transform");
     while (running) {
         App_Update();
         glClear(GL_COLOR_BUFFER_BIT);
         glBindTexture(GL_TEXTURE_2D, tex);
         glUseProgram(prog);
+        glUniformMatrix4fv(utransform, 1, GL_FALSE, (GLfloat *)mtransform);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
