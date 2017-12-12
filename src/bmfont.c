@@ -6,7 +6,7 @@
 ///                 by FontBuilder, Bitmap Font Generator, etc...
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "glyph_info.h"
+#include "bmfont.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Headers
@@ -29,74 +29,79 @@
 
 typedef struct {
     int glyph_id;
-    glyph_info *info;
+    bmfont_info *info;
     UT_hash_handle hh;
-} glyph_info_hash;
+} bmfont_info_hash;
 
-///////////////////////////////////////////////////////////////////////////////
-/// Static variables
-///////////////////////////////////////////////////////////////////////////////
-
-static bool populated = false;
-static glyph_info_hash *glyph_hash = NULL;
+struct bmfont_ {
+    bmfont_info_hash *bmfont_hash;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Static functions
 ///////////////////////////////////////////////////////////////////////////////
 
-static void GlyphInfo_Add(int glyph, glyph_info *info)
+static void BMFont_Add(bmfont *this, int glyph, bmfont_info *info)
 {
-    glyph_info_hash *entry = NULL;
+    bmfont_info_hash *entry = NULL;
 
-    if (!info) {
-        LOGFMT(LOG_EXIT, "Null passed in as *info with glyph #%d", glyph);
+    if (!this || !info) {
+        LOG(LOG_WARN, "NULL argument");
+        return;
     }
 
-    HASH_FIND_INT(glyph_hash, &glyph, entry);
+    HASH_FIND_INT(this->bmfont_hash, &glyph, entry);
     if (entry) {
-        LOGFMT(LOG_EXIT, "Glyph #%d info has already been added", glyph);
+        LOGFMT(LOG_WARN, "Glyph #%d has already been added", glyph);
+        return;
     }
 
-    if (!(entry = malloc(sizeof(glyph_info_hash)))) {
-        LOG(LOG_EXIT, "Failed to alloc memory for hash entry");
+    if (!(entry = malloc(sizeof(bmfont_info_hash)))) {
+        LOG(LOG_EXIT, "Memory alloc failed");
     }
 
     entry->info = info;
     entry->glyph_id = glyph;
     
-    HASH_ADD_INT(glyph_hash, glyph_id, entry);
+    HASH_ADD_INT(this->bmfont_hash, glyph_id, entry);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void GlyphInfo_Populate(const char *file_path)
+bmfont * BMFont_Create(const char *file_path)
 {
     int glyph_id = 0;
     FILE *file = NULL;
-    glyph_info *info = NULL;
+    bmfont *this = NULL;
     unsigned long fsize = 0;
+    bmfont_info *info = NULL;
     int linenum = 1, ival = 0;
     char *buff = NULL, *line = NULL, *lineptr = NULL, linebuff[1024],
         *tok = NULL, *tokptr = NULL, tokbuff[512], *val = NULL, *valptr = NULL,
         valbuff[512];
 
-    if (populated) {
-        LOG(LOG_EXIT, "Tried to re-populate GlyphInfo before cleaning");
+    // Alloc new bmfont struct
+    if (!(this = malloc(sizeof(bmfont)))) {
+        LOG(LOG_EXIT, "Memory alloc failed");
     }
-    populated = true;
+    this->bmfont_hash = NULL;
 
     // Load the BMFont file into buff
     if (!(file = fopen(file_path, "r"))) {
-        LOGFMT(LOG_EXIT, "Could not open font info file: %s", file_path);
+        LOGFMT(LOG_WARN, "Could not open font info file: %s", file_path);
+        return NULL;
     }
 
+    // Get file size
     fseek(file, 0, SEEK_END);
     fsize = (unsigned long)ftell(file);
     fseek(file, 0, SEEK_SET);
 
+    // Allocate file buffer
     if (!(buff = malloc(fsize + 1))) {
-        LOG(LOG_EXIT, "Failed to alloc memory for file buffer");
+        LOG(LOG_EXIT, "Memory alloc failed");
     }
 
+    // Copy into file buffer and close file
     fread(buff, fsize, 1, file);
     fclose(file);
 
@@ -106,13 +111,19 @@ void GlyphInfo_Populate(const char *file_path)
         ++linenum;
         line = strtok_r(NULL, "\n", &lineptr);
         if (!line) {
-            LOG(LOG_EXIT, "BMFont file malformed");
+            LOG(LOG_WARN, "BMFont file malformed");
+            free(this);
+            free(buff);
+            return NULL;
         }
     }
 
+    // Helper macro to parse value out of next kv pair
 #define NEXT_VAL(token) \
     if (!(tok = strtok_r(NULL, " ", &tokptr))) {\
         LOGFMT(LOG_EXIT, "BMFont malformed: line %d, tok %s", linenum, token);\
+        BMFont_Destroy(this);\
+        return NULL;\
     }\
     strcpy(tokbuff, tok);\
     val = strtok_r(tokbuff, "=", &valptr);\
@@ -120,9 +131,10 @@ void GlyphInfo_Populate(const char *file_path)
     strcpy(valbuff, val);\
     ival = (int)strtol(valbuff, NULL, 10);
 
-    while ((line = strtok_r(NULL, "\n", &lineptr))) {
-        if (!(info = malloc(sizeof(glyph_info)))) {
-            LOG(LOG_EXIT, "Failed to alloc memory for glyph info");
+    // Construct bmfont_info struct from line data
+    do {
+        if (!(info = malloc(sizeof(bmfont_info)))) {
+            LOG(LOG_EXIT, "Memory alloc failed");
         }
         strcpy(linebuff, line);
         tok = strtok_r(linebuff, " ", &tokptr);
@@ -148,28 +160,31 @@ void GlyphInfo_Populate(const char *file_path)
         NEXT_VAL("yoffset");
         info->offset.y = ival;
         // We don't care about the other tokens
-        GlyphInfo_Add(glyph_id, info);
+        BMFont_Add(this, glyph_id, info);
         info = NULL;
-    }
+    } while ((line = strtok_r(NULL, "\n", &lineptr)));
+    // TODO: Valgrind complains about this conditional jump depending on
+    // an 'uninitialized value' - look into strtok_r alternative?
 
 #undef NEXT_VAL
 
     free(buff);
-
+    return this;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-const glyph_info * GlyphInfo_Get(int glyph)
+const bmfont_info * BMFont_Info(bmfont *this, int glyph)
 {
-    glyph_info_hash *entry = NULL;
+    bmfont_info_hash *entry = NULL;
 
-    if (!populated) {
-        LOG(LOG_EXIT, "Tried to access before GlyphInfo was populated");
+    if (!this) {
+        LOG(LOG_WARN, "Null argument");
+        return NULL;
     }
 
-    HASH_FIND_INT(glyph_hash, &glyph, entry);
+    HASH_FIND_INT(this->bmfont_hash, &glyph, entry);
     if (!entry) {
-        LOGFMT(LOG_INFO, "Glyph not in hash: %d", glyph);
+        LOGFMT(LOG_WARN, "Glyph not in hash: %d", glyph);
         return NULL;
     }
 
@@ -177,17 +192,19 @@ const glyph_info * GlyphInfo_Get(int glyph)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void GlyphInfo_Cleanup(void)
+void BMFont_Destroy(bmfont *this)
 {
-    if (!populated) {
-        LOG(LOG_EXIT, "Tried to cleanup GlyphInfo before populating");
+    if (!this) {
+        LOG(LOG_WARN, "NULL argument");
+        return;
     }
-    populated = false;
 
-    glyph_info_hash *entry = NULL, *tmp = NULL;
-    HASH_ITER(hh, glyph_hash, entry, tmp) {
-        HASH_DEL(glyph_hash, entry);
+    bmfont_info_hash *entry = NULL, *tmp = NULL;
+    HASH_ITER(hh, this->bmfont_hash, entry, tmp) {
+        HASH_DEL(this->bmfont_hash, entry);
         free(entry->info);
         free(entry);
     }
+
+    free(this);
 }

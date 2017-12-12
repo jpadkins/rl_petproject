@@ -19,7 +19,7 @@
 #include "glad.h"
 
 #include "log.h"
-#include "glyph_info.h"
+#include "bmfont.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Macros
@@ -272,6 +272,11 @@ int main(void)
 
     App_Init();
 
+    bmfont *unifont = BMFont_Create("res/unifont.fnt");
+    const bmfont_info *info = BMFont_Info(unifont, L'x');
+    printf("Position: %dx%d\n", info->position.x, info->position.y);
+    BMFont_Destroy(unifont);
+
     vert = GL_ShaderNew(GL_VERTEX_SHADER, shaders.vertex.basic);
     frag = GL_ShaderNew(GL_FRAGMENT_SHADER, shaders.fragment.basic);
     prog = GL_ProgramNew(vert, frag);
@@ -305,8 +310,8 @@ int main(void)
 
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size.x, tex_size.y, 0, GL_RGBA,

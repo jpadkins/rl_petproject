@@ -1,15 +1,19 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// file:           glyph_info.h
+/// file:           bmfont.h
 /// author:         Jacob Adkins - jpadkins
 /// description:    Managed a (uthash) hash map of glyph metrics from a BMFont
 ///                 file (.fnt) corresponding to a bitmap glyph atlas generated
 ///                 by FontBuilder, Bitmap Font Generator, etc...
-///
-/// LOW: Restructure the API to allow for multiple fonts to be loaded.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLYPH_INFO_H
-#define GLYPH_INFO_H
+#ifndef BMFONT_H
+#define BMFONT_H
+
+///////////////////////////////////////////////////////////////////////////////
+/// Structs
+///////////////////////////////////////////////////////////////////////////////
+
+typedef struct bmfont_ bmfont;
 
 typedef struct {
     struct {
@@ -24,29 +28,31 @@ typedef struct {
         int x;
         int y;
     } offset;
-} glyph_info;
+} bmfont_info;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Populates internal map with glyph information from a .fnt file
+/// @brief Returns a pointer to a new struct representing a loaded BMFont
 ///
 /// Call this once before any calls to GlyphInfo_Get
 ///
 /// @param file_path    Path to .fnt file
+///
+/// @return pointer to a new bmfont struct
 ///////////////////////////////////////////////////////////////////////////////
-void GlyphInfo_Populate(const char *file_path);
+bmfont * BMFont_Create(const char *file_path);
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns a pointer toa glyph_info struct for a given glyph
+/// @brief Returns a pointer to a bmfont_info struct for a given glyph
 ///
 /// @param glyph    UTF-32 value of the glyph
 ///
 /// @return Pointer to the glyph_info struct for a glyph
 ///////////////////////////////////////////////////////////////////////////////
-const glyph_info * GlyphInfo_Get(int glyph);
+const bmfont_info * BMFont_Info(bmfont * this, int glyph);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Frees the memory allocated from populating
 ///////////////////////////////////////////////////////////////////////////////
-void GlyphInfo_Cleanup(void);
+void BMFont_Destroy(bmfont *this);
 
 #endif
