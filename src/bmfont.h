@@ -48,7 +48,7 @@ bmfont * BMFont_Create(const char *file_path);
 ///
 /// @return Pointer to the glyph_info struct for a glyph
 ///////////////////////////////////////////////////////////////////////////////
-const bmfont_info * BMFont_Info(bmfont * this, int glyph);
+bmfont_info const * BMFont_Info(bmfont * this, int glyph);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Frees the memory allocated from populating

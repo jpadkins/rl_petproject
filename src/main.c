@@ -20,6 +20,7 @@
 
 #include "log.h"
 #include "bmfont.h"
+#include "shaders.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Macros
@@ -32,8 +33,6 @@
 /// Structs
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef struct { int x, y; } ivec2;
-
 ///////////////////////////////////////////////////////////////////////////////
 /// Static variables
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,45 +41,7 @@ static float delta = 0.0f;
 static bool running = true;
 static SDL_GLContext context;
 static SDL_Window *window = NULL;
-static const ivec2 window_size = {800, 600};
-
-static const struct {
-    struct {
-        const GLchar *basic;
-    } vertex;
-    struct {
-        const GLchar *basic;
-    } fragment;
-} shaders = {
-    {
-        "                                                   \n\
-        #version 330 core                                   \n\
-                                                            \n\
-        layout (location = 0) in vec3 position;             \n\
-        layout (location = 1) in vec2 texcoord;             \n\
-                                                            \n\
-        out vec2 vtexcoord;                                 \n\
-                                                            \n\
-        uniform mat4 transform;                             \n\
-                                                            \n\
-        void main(void) {                                   \n\
-            gl_Position = transform * vec4(position, 1.0f); \n\
-            vtexcoord = texcoord;                           \n\
-        }"
-    },
-    {
-        "                                                   \n\
-        #version 330 core                                   \n\
-                                                            \n\
-        in vec2 vtexcoord;                                  \n\
-                                                            \n\
-        uniform sampler2D tex;                              \n\
-                                                            \n\
-        void main(void) {                                   \n\
-            gl_FragColor = texture(tex, vtexcoord);         \n\
-        }"
-    }
-};
+static const struct { int x, y; } window_size = {800, 600};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Helper functions
@@ -251,12 +212,48 @@ void App_Update(void)
 /// Main
 ///////////////////////////////////////////////////////////////////////////////
 
+typedef struct { int r, g, b, a; } rlhue;
+
+typedef enum {
+    RLTILE_TEXT,
+    RLTILE_EXACT,
+    RLTILE_FLOOR,
+    RLTILE_CENTER
+} rlttype;
+
+typedef struct {
+    int glyph;
+    rlhue hue;
+    rlttype type;
+} rltile;
+
+typedef struct {
+    struct {
+        int x;
+        int y;
+    } position;
+    struct {
+        int width;
+        int height;
+    } size;
+    GLuint VAO;
+    GLuint VBO;
+    GLuint IBO;
+    rltile *tiles;
+    GLfloat *vertices;
+} rltmap;
+
+typedef struct {
+    rltmap *tmaps;
+    GLuint program;
+} rldisp;
+
 int main(void)
 {
     GLint utransform;
     mat4x4 mtransform;
-    ivec2 tex_size = {0, 0};
     unsigned char *tex_data = NULL;
+    struct { int x, y; } tex_size = {0, 0};
     GLuint VBO, EBO, VAO, vert, frag, prog, tex;
     const GLfloat vertices[] = {
         // Vertex coords        // Texture coords
@@ -271,11 +268,6 @@ int main(void)
     };
 
     App_Init();
-
-    bmfont *unifont = BMFont_Create("res/unifont.fnt");
-    const bmfont_info *info = BMFont_Info(unifont, L'x');
-    printf("Position: %dx%d\n", info->position.x, info->position.y);
-    BMFont_Destroy(unifont);
 
     vert = GL_ShaderNew(GL_VERTEX_SHADER, shaders.vertex.basic);
     frag = GL_ShaderNew(GL_FRAGMENT_SHADER, shaders.fragment.basic);

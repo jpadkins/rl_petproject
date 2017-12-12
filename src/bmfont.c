@@ -173,7 +173,7 @@ bmfont * BMFont_Create(const char *file_path)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-const bmfont_info * BMFont_Info(bmfont *this, int glyph)
+bmfont_info const * BMFont_Info(bmfont *this, int glyph)
 {
     bmfont_info_hash *entry = NULL;
 
