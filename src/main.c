@@ -239,14 +239,11 @@ typedef struct {
     GLuint VAO;
     GLuint VBO;
     GLuint IBO;
+    int num_tiles;
     rltile *tiles;
+    int num_vertices;
     GLfloat *vertices;
 } rltmap;
-
-typedef struct {
-    rltmap *tmaps;
-    GLuint program;
-} rldisp;
 
 int main(void)
 {
