@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file:		common.h
-/// @author:	Jacob Adkins (jpadkins)
-/// @brief:		Header containing global includes and macros
+/// \file	common.h
+/// \author	Jacob Adkins (jpadkins)
+/// \brief	Header containing global includes and macros
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef COMMON_H
@@ -12,36 +12,36 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief	Calls func with args if an expr is false, and then evals to expr
+/// \brief	Calls func with args if an expr is false, and then evals to expr
 ///
 /// Useful for injecting void-returning function calls into conditional
 /// statements, i.e.
 ///
 /// if (CONDBIND(foo == bar, printf, "foo is not equal to %d", bar)) {
-///	 < do something assuming foo == bar >
+///		< do something assuming foo == bar >
 /// }
 ///
 /// Makes many if()/else statements transformable into a single if()
 ///
-/// @param	expr	Expression to test and evaluate to
-/// @param	func	Function to call if expr is false
-/// @param	...		Arguments to call func with
+/// \param	expr	Expression to test and evaluate to
+/// \param	func	Function to call if expr is false
+/// \param	...		Arguments to call func with
 ///////////////////////////////////////////////////////////////////////////////
 #define CONDBIND(expr,func,...) (((expr)?FALSE:(func(__VA_ARGS__),TRUE),expr))
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief	Counts the number of arguments in __VA_ARGS__ of a variadic macro
+/// \brief	Counts the number of arguments in __VA_ARGS__ of a variadic macro
 ///
-/// @param	...	__VA_ARGS__ of another variadic macro
+/// \param	...	__VA_ARGS__ of another variadic macro
 ///////////////////////////////////////////////////////////////////////////////
 #define NUMARGS(...) (sizeof((int[]){__VA_ARGS__})/sizeof(int))
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief	Silences compiler warning about an unused variable
+/// \brief	Silences compiler warning about an unused variable
 ///
 /// This should only be used for debugging purposes.
 ///
-/// @param	x	Unused variable
+/// \param	x	Unused variable
 ///////////////////////////////////////////////////////////////////////////////
 #define UNUSED(x) (void)x
 

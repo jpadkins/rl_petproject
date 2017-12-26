@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file:		shaders.h
-/// @author:	Jacob Adkins (jpadkins)
-/// @brief:		Struct containing sources for different shaders
+/// \file	shaders.h
+/// \author	Jacob Adkins (jpadkins)
+/// \brief	Struct containing sources for different shaders
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef SHADERS_H

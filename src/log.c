@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file:		log.c
-/// @author:	Jacob Adkins (jpadkins)
-/// @brief:		Provides a simple C99 API for logging and halting execution if
-///				necessary.
+/// \file	log.c
+/// \author	Jacob Adkins (jpadkins)
+/// \brief	Provides a simple C99 API for logging and halting execution if
+///			necessary.
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "log.h"
