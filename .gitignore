@@ -11,7 +11,7 @@ obj/*
 !obj/.gitkeep
 
 res/*
-!res/fonts/.gitkeep
+!res/.gitkeep
 
 *.swo
 *.swp
