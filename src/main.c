@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file:		main.c
-/// @author:	Jacob Adkins (jpadkins)
-/// @brief:		The roguelike application entry point.
+/// \file	main.c
+/// \author	Jacob Adkins (jpadkins)
+/// \brief	The roguelike application entry point.
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,12 +39,12 @@ static const struct { int x, y; } window_size = {800, 600};
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates and compiles a new OpenGL shader
+/// \brief Creates and compiles a new OpenGL shader
 ///
-/// @param type Type of the shader
-/// @param src  Pointer to the shader's source
+/// \param type Type of the shader
+/// \param src  Pointer to the shader's source
 ///
-/// @return Identifier of the newly created and compiled shader
+/// \return Identifier of the newly created and compiled shader
 ///////////////////////////////////////////////////////////////////////////////
 GLuint GL_ShaderNew(GLenum type, const char *src)
 {
@@ -68,7 +68,7 @@ GLuint GL_ShaderNew(GLenum type, const char *src)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Used internally by GL_ProgramNew
+/// \brief Used internally by GL_ProgramNew
 ///////////////////////////////////////////////////////////////////////////////
 GLuint GL_ProgramNewVarg(int num, ...)
 {
@@ -98,16 +98,16 @@ GLuint GL_ProgramNewVarg(int num, ...)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates and links a new OpenGL shader program
+/// \brief Creates and links a new OpenGL shader program
 ///
-/// @param ...	  Variable number of shaders to link (GLuint)
+/// \param ...	  Variable number of shaders to link (GLuint)
 ///
-/// @return Identifier of the newly created and linked shader program
+/// \return Identifier of the newly created and linked shader program
 ///////////////////////////////////////////////////////////////////////////////
 #define GL_ProgramNew(...) GL_ProgramNewVarg(NUMARGS(__VA_ARGS__),__VA_ARGS__)
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Initialze SDL2, the window, OpenGL, and FreeType
+/// \brief Initialze SDL2, the window, OpenGL, and FreeType
 ///////////////////////////////////////////////////////////////////////////////
 void App_Init(void)
 {
@@ -149,7 +149,7 @@ void App_Init(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Cleanup SDL2, the window, and FreeType
+/// \brief Cleanup SDL2, the window, and FreeType
 ///////////////////////////////////////////////////////////////////////////////
 void App_Quit(void)
 {
@@ -159,7 +159,7 @@ void App_Quit(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Update the application state
+/// \brief Update the application state
 ///////////////////////////////////////////////////////////////////////////////
 void App_Update(void)
 {
@@ -265,7 +265,7 @@ int main(void)
 
 	{
 		BMFont *font = BMFont_Create("res/unifont.fnt");
-		const BMFontInfo *info = BMFont_GetInfoPtr(font, '@');
+		const BMFontInfo *info = BMFont_GetInfoPtr(font, '\');
 		logfmt_info(
 			"'@' glyph metrics: x: %d, y: %d",
 			info->position.x,
