@@ -21,7 +21,9 @@ CFLAGS := -g -std=c11 -Wall -Wextra -Werror -Wconversion -pedantic
 ###############################################################################
 
 GLFW := -lglfw
-LIBS := -lm -ldl -isystem lib
+LIBS := -lm -ldl # lm for linmath, ldl for glad
+GLIB := `pkg-config --libs glib-2.0`
+GLIBINC := `pkg-config --cflags glib-2.0`
 FREETYPE2 := `pkg-config --libs freetype2`
 FREETYPE2INC := `pkg-config --cflags freetype2`
 SDL2 := -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_ttf -lSDL2_mixer
@@ -76,14 +78,14 @@ clean:
 ###############################################################################
 
 $(BIN): $(OBJ_FILES)
-	$(COMP) $^ -o $@ $(LIBS) $(SDL2) #$(FREETYPE2)
+	$(COMP) $^ -o $@ $(LIBS) $(SDL2) $(GLIB)
 
 ###############################################################################
 ### Build the objects
 ###############################################################################
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(COMP) $(CFLAGS) -c -o $@ $^ #$(FREETYPE2INC)
+	$(COMP) $(CFLAGS) -c -o $@ $^ $(GLIBINC)
 
 ###############################################################################
 ### Run valgrind

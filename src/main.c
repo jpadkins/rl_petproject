@@ -1,13 +1,14 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// file:           main.c
-/// author:         Jacob Adkins - jpadkins
-/// description:    The roguelike application entry point.
+/// @file:      main.c
+/// @author:    Jacob Adkins (jpadkins)
+/// @brief:     The roguelike application entry point.
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Headers
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,19 +20,9 @@
 #include "glad.h"
 
 #include "log.h"
+#include "common.h"
 #include "bmfont.h"
 #include "shaders.h"
-
-///////////////////////////////////////////////////////////////////////////////
-/// Macros
-///////////////////////////////////////////////////////////////////////////////
-
-#define NUMARGS(...) (sizeof((int[]){__VA_ARGS__})/sizeof(int))
-#define UNUSED(x) (void)x
-
-///////////////////////////////////////////////////////////////////////////////
-/// Structs
-///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Static variables
@@ -62,17 +53,17 @@ GLuint GL_ShaderNew(GLenum type, const char *src)
     GLchar errmsg[512];
 
     if (!(shader = glCreateShader(type))) {
-        LOG(LOG_EXIT, "Shader creation failed");
+        log_exit("Shader creation failed");
     }
 
     glShaderSource(shader, 1, &src, NULL);
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+
     if (!status) {
         glGetShaderInfoLog(shader, 512, NULL, errmsg);
-        LOGFMT(LOG_EXIT, "Shader compilation failed: %s", errmsg);
+        logfmt_exit("Shader compilation failed: %s", errmsg);
     }
-
     return shader;
 }
 
@@ -87,7 +78,7 @@ GLuint GL_ProgramNewVarg(int num, ...)
     GLchar errmsg[512];
 
     if (!(program = glCreateProgram())) {
-        LOG(LOG_EXIT, "Shader program creation failed");
+        log_exit("Shader program creation failed");
     }
 
     va_start(ap, num);
@@ -100,7 +91,7 @@ GLuint GL_ProgramNewVarg(int num, ...)
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (!status) {
         glGetProgramInfoLog(program, 512, NULL, errmsg);
-        LOGFMT(LOG_EXIT, "Shader program linking failed: %s", errmsg);
+        logfmt_exit("Shader program linking failed: %s", errmsg);
     }
 
     return program;
@@ -121,7 +112,7 @@ GLuint GL_ProgramNewVarg(int num, ...)
 void App_Init(void)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING)) {
-        LOG(LOG_EXIT, "SDL2 Initialization failed");
+        log_exit("SDL2 Initialization failed");
     }
 
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
@@ -139,15 +130,15 @@ void App_Init(void)
         window_size.x,
         window_size.y,
         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN))) {
-        LOG(LOG_EXIT, "Window creation failed");
+        log_exit("Window creation failed");
     }
     else if (!(context = SDL_GL_CreateContext(window))) {
-        LOG(LOG_EXIT, "OpenGL context creation failed");
+        log_exit("OpenGL context creation failed");
     }
 
     gladLoadGLLoader(SDL_GL_GetProcAddress);
     if (!GL_VERSION_3_3) {
-        LOG(LOG_EXIT, "Failed to load OpenGL >= 3.3");
+        log_exit("Failed to load OpenGL >= 3.3");
     }
 
     glEnable(GL_BLEND);
@@ -187,15 +178,15 @@ void App_Update(void)
         case SDL_WINDOWEVENT:
             switch (event.window.event) {
             case SDL_WINDOWEVENT_RESIZED:
-                glViewport(
-                    0,
-                    0,
-                    event.window.data1,
-                    event.window.data2
-                    );
-                break;
+            glViewport(
+                0,
+                0,
+                event.window.data1,
+                event.window.data2
+                );
+            break;
             default:
-                break;
+            break;
             }
             break;
         default:
@@ -241,9 +232,15 @@ typedef struct {
     GLuint IBO;
     int num_tiles;
     rltile *tiles;
+    int num_indices;
+    GLuint *indices;
     int num_vertices;
     GLfloat *vertices;
 } rltmap;
+
+typedef struct {
+    rltmap *tmaps;
+} rldisp;
 
 int main(void)
 {
@@ -253,7 +250,7 @@ int main(void)
     struct { int x, y; } tex_size = {0, 0};
     GLuint VBO, EBO, VAO, vert, frag, prog, tex;
     const GLfloat vertices[] = {
-        // Vertex coords        // Texture coords
+        // Vertex coords    // Texture coords
          0.9f,   0.9f,  0.0f,   1.0f,   1.0f,
          0.9f,  -0.9f,  0.0f,   1.0f,   0.0f,
         -0.9f,  -0.9f,  0.0f,   0.0f,   0.0f,
@@ -265,6 +262,17 @@ int main(void)
     };
 
     App_Init();
+
+    {
+        BMFont *font = BMFont_Create("res/unifont.fnt");
+        const BMFontInfo *info = BMFont_GetInfoPtr(font, '@');
+        logfmt_info(
+            "'@' glyph metrics: x: %d, y: %d",
+            info->position.x,
+            info->position.y
+            );
+        BMFont_Destroy(font);
+    }
 
     vert = GL_ShaderNew(GL_VERTEX_SHADER, shaders.vertex.basic);
     frag = GL_ShaderNew(GL_FRAGMENT_SHADER, shaders.fragment.basic);
@@ -281,20 +289,39 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-        GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
-        (void *)0);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        sizeof(indices),
+        indices,
+        GL_STATIC_DRAW
+        );
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        5 * sizeof(GLfloat),
+        (void *)0
+        );
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
-        (void *)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE, 5 * sizeof(GLfloat),
+        (void *)(3 * sizeof(GLfloat))
+        );
     glEnableVertexAttribArray(1);
 
     // Load texture
     stbi_set_flip_vertically_on_load(true);
-    if (!(tex_data = stbi_load("res/unifont.png", &tex_size.x, &tex_size.y,
-        NULL, STBI_rgb_alpha))) {
-        LOG(LOG_EXIT, "Font atlas loading failed");
+    if (!(tex_data = stbi_load(
+        "res/unifont.png",
+        &tex_size.x,
+        &tex_size.y,
+        NULL,
+        STBI_rgb_alpha))) {
+        log_exit("Font atlas loading failed");
     }
 
     glGenTextures(1, &tex);
@@ -303,8 +330,17 @@ int main(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_size.x, tex_size.y, 0, GL_RGBA,
-        GL_UNSIGNED_BYTE, tex_data);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        tex_size.x,
+        tex_size.y,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        tex_data
+        );
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(tex_data);
 

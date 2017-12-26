@@ -1,3 +1,8 @@
+// This great little linear alg header was found at:
+// https://github.com/datenwolf/linmath.h
+//
+// Thanks, https://github.com/datenwolf/linmath.h/graphs/contributors!
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma clang diagnostic push
